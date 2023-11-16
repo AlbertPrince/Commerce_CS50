@@ -3,13 +3,23 @@
 {% block body %}
     <h2>Active Listings</h2>
     {% for listing in active_listings %}
-        <ul>
-            <li><a href="{% url "listing" listing.id %}">Item: {{ listing.title }}</a></li>
-            <li>Current Bid: {{ listing.current_bid}}</li>
-            <li>Seller: {{ listing.seller}}</li>
-            <li>Reserve: {{ listing.reserve}}</li>
-            <li>Description: {{ listing.description}}</li>
-        </ul>
+
+        <div class="card" style="width: 18rem;">
+            <img src="{{listing.item_image }}" class="card-img-top" alt="...">
+            <div class="card-body">
+              <h5 class="card-title">{{ listing.title }}</h5>
+              <p class="card-text">{{ listing.description}}</p>
+              <p class="card-text">Price: {{ listing.reserve}}</p>
+              <p class="card-text">Current Bid: {{ listing.current_bid}}</p>
+              <p class="card-text">Seller: {{ listing.seller}}</p>
+              <a href="{% url "listing" listing.id %}" class="btn btn-primary">View Listing</a>
+              {% if request.user == listing.seller %}
+              <a href="{% url "edit" listing.id %}" class="btn btn-primary">Edit Listing</a>
+              {% endif %}
+              <a href="" class="btn btn-primary">Bid</a>
+            </div>
+        </div><br>
     {% endfor %}
+    
     
 {% endblock %}

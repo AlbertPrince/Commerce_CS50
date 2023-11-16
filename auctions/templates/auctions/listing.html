@@ -22,20 +22,33 @@
                 
             {% endif %}
 
-            <a href="{% url "addComment" id=comment.id %}">Add Comment</a>
-
             {% comment %} {% if user.is_authenticated %}
-    <form method="post" action="{% url 'addToWatchlist' listing.id %}">
-        {% csrf_token %}
-        <button type="submit">
-            {% if is_in_watchlist %}
-                Remove from Watchlist
-            {% else %}
-                Add to Watchlist
-            {% endif %}
-        </button>
-    </form>
-{% endif %} {% endcomment %}
+                <form action="" method="post">
+                    {{ form }}
+                </form>
+            
+            {% endif %} {% endcomment %}
+
+            {% comment %} <div class="row mx-3"> {% endcomment %}
+                <h2>Comments</h2><br>
+
+                {% if user.is_authenticated %}
+                    <form action="{% url "addComment" id=listing.id %}" method="post">
+                        {% csrf_token %}
+                        <label for="price">Add Comment</label>
+                        <input type="text" name="newComment" placeholder="Add New Comment">
+                        <button type="submit" class="btn btn-warning">Add</button>
+                        <div class="form-group">
+                            
+                        </div>
+                    </form>
+                {% endif %}
+                <br>
+                {% for comment in comments %}
+                    <li class="list-group-item">{{ comment.message }}</li>
+                {% endfor %}
+                
+            {% comment %} </div> {% endcomment %}
 
 
         </div>

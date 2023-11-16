@@ -15,13 +15,14 @@ class Category(models.Model):
 class AuctionListing(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
-    current_bid = models.DecimalField(max_digits=10, decimal_places=2, default='0.0')
+    current_bid = models.ForeignKey('Bid', on_delete=models.CASCADE, blank=True, null=True)
+
     reserve = models.DecimalField(max_digits=10, decimal_places=2)
     seller = models.ForeignKey(User, on_delete=models.CASCADE)
     item_image = models.URLField(blank=True, null=True)
     close_time = models.DateTimeField()
     category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=True, null=True)
-    is_active = models.BooleanField()
+    is_active = models.BooleanField(default=True)
     
     def __str__(self) -> str:
         return self.title
@@ -34,10 +35,14 @@ class Bid(models.Model):
     
 
 class Comment(models.Model):
-    body = models.TextField()
-    commenter = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     comment_time = models.DateTimeField(auto_now=True)
-    auction_listing = models.ForeignKey(AuctionListing, on_delete=models.CASCADE)
+    listing = models.ForeignKey(AuctionListing, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.author} commented on {self.listing}"
+    
     
 class Watchlist(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
