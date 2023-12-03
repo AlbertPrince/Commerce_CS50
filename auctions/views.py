@@ -12,7 +12,7 @@ from .forms import AuctionForm, CommentForm, BidForm
 
 
 def index(request):
-    active_listings = AuctionListing.objects.all()
+    active_listings = AuctionListing.objects.filter(AuctionListing.is_active == True)
     context = {'active_listings': active_listings}
     return render(request, "auctions/index.html", context)
 
