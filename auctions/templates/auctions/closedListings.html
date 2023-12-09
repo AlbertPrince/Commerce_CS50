@@ -1,8 +1,8 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <h2>All Listings</h2>
-    {% for listing in listings %}
+    <h2>Closed Listings</h2>
+    {% for listing in closed_listings %}
 
         <div class="card" style="width: 18rem;">
             <img src="{{listing.item_image }}" class="card-img-top" alt="...">
@@ -13,11 +13,6 @@
               <p class="card-text">Current Bid: {{ listing.current_bid}}</p>
               <p class="card-text">Seller: {{ listing.seller}}</p>
               <a href="{% url "listing" listing.id %}" class="btn btn-primary">View Listing</a>
-              {% if request.user == listing.seller %}
-              <a href="{% url "edit" listing.id %}" class="btn btn-primary">Edit Listing</a>
-              {% endif %}
-              <a href="" class="btn btn-primary">Bid</a>
-            </div>
         </div><br>
     {% endfor %}
     

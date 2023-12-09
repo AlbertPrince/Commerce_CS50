@@ -7,6 +7,7 @@
         <li>current bid: {{ listing.current_bid }}</li>
         <li>description: {{ listing.description }}</li>
         <li>seller: {{ listing.seller }}</li>
+        <li>Bid Status: {{ listing.is_active }}</li>
         <div>
             {% if user.is_authenticated %}
                 {% if is_in_watchlist %}
@@ -46,6 +47,19 @@
                     <button type="submit" class="btn btn-warning">Add</button>
                 </form>
             {% endif %}
+
+            
+
+            {% if request.user == listing.creator and request.user.is_authenticated %}
+            <!-- Your code for authenticated creator -->
+            <form method="post" action="{% url 'close' listing.id %}">
+                {% csrf_token %}
+                <button type="submit">Close Listing</button>
+            </form>
+            
+            {% endif %}
+
+            {% comment %} {% endif %} {% endcomment %}
 
             {% comment %} <div class="row mx-3"> {% endcomment %}
                 <h2>Comments</h2><br>

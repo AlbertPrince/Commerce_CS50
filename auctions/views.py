@@ -3,7 +3,8 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.db.models import Max
+from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -13,9 +14,19 @@ from .forms import AuctionForm, CommentForm, BidForm
 
 
 def index(request):
+    listings = AuctionListing.objects.all()
+    context = {'listings': listings}
+    return render(request, "auctions/index.html", context)
+
+def activeListings(request):
     active_listings = AuctionListing.objects.filter(is_active=True)
     context = {'active_listings': active_listings}
-    return render(request, "auctions/index.html", context)
+    return render(request, "auctions/activeListings.html", context)
+
+def closedListings(request):
+    closed_listings = AuctionListing.objects.filter(is_active=False)
+    context = {'closed_listings': closed_listings}
+    return render(request, "auctions/closedListings.html", context)
 
 
 def login_view(request):
@@ -41,7 +52,6 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(reverse("index"))
-
 
 # def register(request):
     if request.method == "POST":
@@ -136,6 +146,15 @@ def listing(request, auction_id):
     watchlist,created = Watchlist.objects.get_or_create(user=request.user)
     is_in_watchlist = listing in watchlist.listings.all()
     is_in_watchlist = request.user.watchlist.listings.all()
+    highest_bid = Bid.objects.filter(listing=listing).aggregate(Max('bid_price'))
+
+    if highest_bid['bid_price__max']:
+        highest_bidder = Bid.objects.filter(listing=listing, bid_price=highest_bid['bid_price__max']).first().bidder
+        if request.user == highest_bidder:
+            messages.info(request, "You have won this bid")
+    else:
+        # No bids for this listing
+        highest_bidder = None
     context = {'listing': listing, "is_in_watchlist": is_in_watchlist, "form": form, "comments": allComments}
     return render(request, "auctions/listing.html", context)
  
@@ -193,31 +212,16 @@ def bid(request, id):
         return HttpResponseRedirect(reverse("listing", args=(listing.id,)))
 
 @login_required
-def closeBid(request, id):
-    form = BidForm(request.POST)
-    bid = Bid.objects.get()
+def closeListing(request, id):
+    listing = get_object_or_404(AuctionListing, id=id)
 
-# @login_required
-# def addComment(request, id):
-#     form = CommentForm()
-#     if request.method == "POST":
-#         form = CommentForm(request.POST)
-#         if form.is_valid():
-#             comment = form.save(commit=False)
-#             comment.commenter = request.user
-#             comment.auction_listing = AuctionListing.objects.get(id=id)
-#             return redirect('listing', id=id)
-#     return render(request, "auctions/createListing.html", {"form": form})
+    if request.user == listing.creator:
+        listing.is_active = False
+        listing.save()
+        return HttpResponseRedirect(reverse("listing", args=(listing.id,)))
+    else:
+        return HttpResponseForbidden("You do not have permission to close this listing.")
 
-# @login_required
-# def deleteComment(request, id):
-#     comment = get_object_or_404(Comment, id=id)
-
-#     if request.user == comment.commenter or request.user.has_perm('commerce.delete_comment'):
-#         comment.delete()
-    
-#     # Redirect back to the listing page or another appropriate page
-#     return redirect('listing', id=comment.auction_listing.id)
 
 def addComment(request, id):
     currentUser = request.user
@@ -235,7 +239,7 @@ def addComment(request, id):
 def deleteComment(request):
     currentUser = request.user
 
-    pass
+    
 
 
 
