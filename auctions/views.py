@@ -110,7 +110,6 @@ def createListing(request):
         if form.is_valid():
             auction_listing = form.save(commit=False)
             auction_listing.creator = request.user
-
             auction_listing.save()
 
             return redirect('index')
@@ -122,11 +121,9 @@ def editListing(request, id):
     # Retrieve the existing AuctionListing instance
     listing = get_object_or_404(AuctionListing, pk=id)
 
-    # Check if the logged-in user is the seller of the listing
-    if request.user != listing.seller:
+    if request.user != listing.creator:
         raise PermissionDenied("You don't have permission to edit this listing.")
 
-    # Initialize the form with the instance of the listing
     form = AuctionForm(instance=listing)
 
     if request.method == "POST":
@@ -153,7 +150,6 @@ def listing(request, auction_id):
         if request.user == highest_bidder:
             messages.info(request, "You have won this bid")
     else:
-        # No bids for this listing
         highest_bidder = None
     context = {'listing': listing, "is_in_watchlist": is_in_watchlist, "form": form, "comments": allComments}
     return render(request, "auctions/listing.html", context)
@@ -223,7 +219,7 @@ def closeListing(request, id):
         return HttpResponseForbidden("You do not have permission to close this listing.")
 
 
-def addComment(request, id):
+# def addComment(request, id):
     currentUser = request.user
     listingData = AuctionListing.objects.get(pk=id)
     message = request.POST['newComment']
@@ -235,31 +231,18 @@ def addComment(request, id):
     )
     newComment.save()
     return HttpResponseRedirect(reverse("listing", args=(id,)))
+@login_required
+def addComment(request, id):
+    listing = get_object_or_404(AuctionListing, id=id)
+    form = CommentForm(request.POST)
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.listing = listing
+        comment.save()
+        return HttpResponseRedirect(reverse("listing", args=(id,)))
 
 def deleteComment(request):
-    currentUser = request.user
-
-    
-
-
-
-# @login_required
-# def addComment(request, id):
-#     form = CommentForm()
-#     if request.method == "POST":
-#         form = CommentForm(request.POST)
-#         if form.is_valid():
-#             comment = form.save(commit=False)
-#             comment.author = request.user
-#             comment.listing = AuctionListing.objects.get(id=id)
-#             comment.save()
-#             return redirect('listing', id=id)
-
-#     # If the form is not valid, render the listing page with an error message
-#     return render(request, "auctions/listing.html", {"form": form, "error_message": "Invalid form submission"})
-
-# @login_required
-# def deleteComment(request, id):
     comment = get_object_or_404(Comment, id=id)
 
     # Check if the current user is the commenter or has permission to delete any comment
