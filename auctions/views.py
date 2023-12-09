@@ -43,7 +43,7 @@ def logout_view(request):
     return HttpResponseRedirect(reverse("index"))
 
 
-def register(request):
+# def register(request):
     if request.method == "POST":
         username = request.POST["username"]
         email = request.POST["email"]
@@ -68,6 +68,30 @@ def register(request):
     else:
         return render(request, "auctions/register.html")
 
+def register(request):
+    if request.method == "POST":
+        username = request.POST["username"]
+        email = request.POST["email"]
+
+        password = request.POST["password"]
+        confirmation = request.POST["confirmation"]
+        if password != confirmation:
+            return render(request, "auctions/register.html", {
+                "message": "Passwords must match."
+            })
+
+        try:
+            user = User.objects.create_user(username, email, password)
+            # Create a Watchlist for the user
+            # Watchlist.objects.create(user=user)
+            login(request, user)
+            return HttpResponseRedirect(reverse("index"))
+        except IntegrityError:
+            return render(request, "auctions/register.html", {
+                "message": "Username or email already taken."
+            })
+    else:
+        return render(request, "auctions/register.html")
 
 def createListing(request):
     form = AuctionForm()
@@ -107,9 +131,10 @@ def editListing(request, id):
 def listing(request, auction_id):
     listing = AuctionListing.objects.get(id=auction_id)
     form = BidForm()
+    commentForm = CommentForm()
     allComments = Comment.objects.filter(listing=listing)
-    # watchlist,created = Watchlist.objects.get_or_create(user=request.user)
-    # is_in_watchlist = listing in watchlist.listings.all()
+    watchlist,created = Watchlist.objects.get_or_create(user=request.user)
+    is_in_watchlist = listing in watchlist.listings.all()
     is_in_watchlist = request.user.watchlist.listings.all()
     context = {'listing': listing, "is_in_watchlist": is_in_watchlist, "form": form, "comments": allComments}
     return render(request, "auctions/listing.html", context)
@@ -117,7 +142,7 @@ def listing(request, auction_id):
 @login_required(login_url='login')
 def addToWatchlist(request, id):
     listing = AuctionListing.objects.get(id=id)
-    # watchlist,created = Watchlist.objects.get_or_create(user=request.user)
+    watchlist,created = Watchlist.objects.get_or_create(user=request.user)
     request.user.watchlist.listings.add(listing)
     return HttpResponseRedirect(reverse("listing", args=(id,)))
 
@@ -135,10 +160,42 @@ def viewWatchlist(request):
     context = {'watchlist_items': watchlist_items}
     return render(request, 'auctions/watchlist.html', context)
 
+# @login_required
+# def bid(request, id):
+    if request.method == "Post":
+        form = BidForm(request.POST)
+        if form.is_valid():
+            bid = form.save(commit=False)
+            bid.listing = AuctionListing.objects.get(id=id)
+            bid.bidder = request.user
+            bid.save()
+            return HttpResponseRedirect(reverse("listing", args=(id,)))
+    else:
+        form = BidForm()
+
 @login_required
 def bid(request, id):
-    form = BidForm()
-    
+    listing = get_object_or_404(AuctionListing, id=id)
+    form = BidForm(request.POST)
+
+    if form.is_valid():
+        bid = form.save(commit=False)
+        bid.listing = listing
+        bid.bidder = request.user
+
+        if bid.listing.starting_bid <= form.cleaned_data["bid_price"] and listing.current_bid < form.cleaned_data["bid_price"]:
+            bid.listing.update_current_bid(form.cleaned_data["bid_price"])
+            bid.save()
+        else:
+            messages.error(request, "You cannot bid less than the starting bid or current bid")
+        #     return redirect('listing', id=bid.listing.id)
+
+        return HttpResponseRedirect(reverse("listing", args=(listing.id,)))
+
+@login_required
+def closeBid(request, id):
+    form = BidForm(request.POST)
+    bid = Bid.objects.get()
 
 # @login_required
 # def addComment(request, id):

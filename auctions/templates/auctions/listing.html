@@ -3,6 +3,7 @@
 {% block body %}
     <ul>
         <li>title: {{ listing.title }}</li>
+        <li>start bid: {{ listing.starting_bid }}</li>
         <li>current bid: {{ listing.current_bid }}</li>
         <li>description: {{ listing.description }}</li>
         <li>seller: {{ listing.seller }}</li>
@@ -28,6 +29,23 @@
                 </form>
             
             {% endif %} {% endcomment %}
+
+            {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <h2>Bid</h2>
+            {% if user.is_authenticated %}
+                <form action="{% url "addBid" id=listing.id %}" method="post">
+                    {% csrf_token %}
+                    {{ form }}
+                    <button type="submit" class="btn btn-warning">Add</button>
+                </form>
+            {% endif %}
 
             {% comment %} <div class="row mx-3"> {% endcomment %}
                 <h2>Comments</h2><br>
