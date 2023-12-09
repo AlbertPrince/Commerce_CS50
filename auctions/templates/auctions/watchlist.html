@@ -1,16 +1,30 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    {% for item in watchlist_items %}
-        <ul>
-            <li>Id: {{ item.id }}</li>
-            <li>Title: {{ item.title }}</li>
-            <li>Description: {{ item.description }}</li>
-            <li>Seller: {{ item.seller }}</li>
-            
-        </ul>
+    {% for listing in watchlist_items %}
+
+
+        <div class="card" style="width: 18rem;">
+            <img src="{{listing.item_image }}" class="card-img-top" alt="...">
+            <div class="card-body">
+              <h5 class="card-title">{{ listing.title }}</h5>
+              <p class="card-text">{{ listing.description}}</p>
+              <p class="card-text">Starting Bid: {{ listing.starting_bid}}</p>
+              <p class="card-text">Current Bid: {{ listing.current_bid}}</p>
+              <p class="card-text">Seller: {{ listing.seller}}</p>
+              <a href="{% url "listing" listing.id %}" class="btn btn-primary">View Listing</a>
+              {% if request.user == listing.seller %}
+              <a href="{% url "edit" listing.id %}" class="btn btn-primary">Edit Listing</a>
+              {% endif %}
+              <a href="" class="btn btn-primary">Bid</a>
+            </div>
+        </div><br>
     {% empty %}
     <p>No item in watchlist</p>
         
     {% endfor %}
+
+
+
+    
 {% endblock body %}

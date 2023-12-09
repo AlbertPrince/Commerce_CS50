@@ -62,9 +62,9 @@
             {% comment %} {% endif %} {% endcomment %}
 
             {% comment %} <div class="row mx-3"> {% endcomment %}
-                <h2>Comments</h2><br>
+                <h2>Add Comment</h2><br>
 
-                {% if user.is_authenticated %}
+                {% comment %} {% if user.is_authenticated %}
                     <form action="{% url "addComment" id=listing.id %}" method="post">
                         {% csrf_token %}
                         <label for="price">Add Comment</label>
@@ -74,10 +74,29 @@
                             
                         </div>
                     </form>
-                {% endif %}
+                {% endif %} {% endcomment %}
+
+
+                    {% if user.is_authenticated %}
+                        <form action="{% url "addComment" id=listing.id %}" method="post">
+                            {% csrf_token %}
+                            {{ commentForm }}
+                            <button type="submit">Comment</button>
+                        </form>
+                    {% endif %}
+
                 <br>
+                <h3>Comments</h3>
                 {% for comment in comments %}
                     <li class="list-group-item">{{ comment.message }}</li>
+                    {% if user.is_authenticated %}
+                    <form action="{% url "deleteComment" id=comment.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit">Delete Comment</button>
+                    </form>
+                    {% endif %}
+                    
+                    
                 {% endfor %}
                 
             {% comment %} </div> {% endcomment %}

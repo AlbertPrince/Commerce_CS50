@@ -151,7 +151,7 @@ def listing(request, auction_id):
             messages.info(request, "You have won this bid")
     else:
         highest_bidder = None
-    context = {'listing': listing, "is_in_watchlist": is_in_watchlist, "form": form, "comments": allComments}
+    context = {'listing': listing, "is_in_watchlist": is_in_watchlist, "form": form, "comments": allComments, "commentForm": commentForm}
     return render(request, "auctions/listing.html", context)
  
 @login_required(login_url='login')
@@ -231,6 +231,8 @@ def closeListing(request, id):
     )
     newComment.save()
     return HttpResponseRedirect(reverse("listing", args=(id,)))
+
+
 @login_required
 def addComment(request, id):
     listing = get_object_or_404(AuctionListing, id=id)
@@ -240,17 +242,16 @@ def addComment(request, id):
         comment.author = request.user
         comment.listing = listing
         comment.save()
-        return HttpResponseRedirect(reverse("listing", args=(id,)))
+    return HttpResponseRedirect(reverse("listing", args=(id,)))
 
-def deleteComment(request):
+@login_required
+def deleteComment(request, id):
     comment = get_object_or_404(Comment, id=id)
 
-    # Check if the current user is the commenter or has permission to delete any comment
     if request.user == comment.author or request.user.has_perm('commerce.delete_comment'):
+        listing_id = comment.listing.id 
         comment.delete()
-        # Set a success message
         messages.success(request, "Comment deleted successfully.")
-        return redirect('listing', id=comment.auction_listing.id)
+        return HttpResponseRedirect(reverse('listing', args=(listing_id,)))
     else:
-        # Raise a PermissionDenied exception if the user doesn't have the right permissions
         raise PermissionDenied("You don't have permission to delete this comment.")

@@ -16,7 +16,6 @@
               {% if request.user == listing.creator %}
               <a href="{% url "edit" listing.id %}" class="btn btn-primary">Edit Listing</a>
               {% endif %}
-              <a href="" class="btn btn-primary">Bid</a>
             </div>
         </div><br>
     {% endfor %}
