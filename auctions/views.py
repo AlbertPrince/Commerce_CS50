@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -7,12 +8,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
-from .models import Comment, User, AuctionListing, Watchlist
+from .models import Bid, Comment, User, AuctionListing, Watchlist
 from .forms import AuctionForm, CommentForm, BidForm
 
 
 def index(request):
-    active_listings = AuctionListing.objects.filter(AuctionListing.is_active == True)
+    active_listings = AuctionListing.objects.filter(is_active=True)
     context = {'active_listings': active_listings}
     return render(request, "auctions/index.html", context)
 
@@ -47,7 +48,6 @@ def register(request):
         username = request.POST["username"]
         email = request.POST["email"]
 
-        # Ensure password matches confirmation
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
         if password != confirmation:
@@ -55,7 +55,6 @@ def register(request):
                 "message": "Passwords must match."
             })
 
-        # Attempt to create new user
         try:
             user = User.objects.create_user(username, email, password)
             Watchlist.objects.create(user=user)
@@ -69,16 +68,20 @@ def register(request):
     else:
         return render(request, "auctions/register.html")
 
+
 def createListing(request):
     form = AuctionForm()
     if request.method == "POST":
         form = AuctionForm(request.POST)
         if form.is_valid():
             auction_listing = form.save(commit=False)
-            auction_listing.seller = request.user
+            auction_listing.creator = request.user
+
             auction_listing.save()
+
             return redirect('index')
     return render(request, "auctions/createListing.html", {"form": form})
+
 
 @login_required
 def editListing(request, id):
@@ -132,14 +135,10 @@ def viewWatchlist(request):
     context = {'watchlist_items': watchlist_items}
     return render(request, 'auctions/watchlist.html', context)
 
-
-
-
-
 @login_required
 def bid(request, id):
     form = BidForm()
-    pass
+    
 
 # @login_required
 # def addComment(request, id):
@@ -177,6 +176,8 @@ def addComment(request, id):
     return HttpResponseRedirect(reverse("listing", args=(id,)))
 
 def deleteComment(request):
+    currentUser = request.user
+
     pass
 
 

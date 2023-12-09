@@ -1,3 +1,4 @@
+from django import forms
 from django.forms import ModelForm
 from .models import AuctionListing, Comment, Bid
 
@@ -5,7 +6,7 @@ class AuctionForm(ModelForm):
     class Meta:
         model = AuctionListing
         fields = '__all__'
-        exclude = ["seller", "current_bid", "is_active"]
+        exclude = ["seller", "is_active", "current_bid", "creator"]
         
 class CommentForm(ModelForm):
     class Meta:
